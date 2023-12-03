@@ -26,16 +26,13 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider<ActiveTodoCountBloc>(
           create: (context) => ActiveTodoCountBloc(
-              initialActiveTodoCount:
-                  context.read<TodoListBloc>().state.todos.length,
-              todoListBloc: BlocProvider.of<TodoListBloc>(context)),
+            initialActiveTodoCount:
+                context.read<TodoListBloc>().state.todos.length,
+          ),
         ),
         BlocProvider<FilteredTodosBloc>(
           create: (context) => FilteredTodosBloc(
             initialTodos: context.read<TodoListBloc>().state.todos,
-            todoFilterBloc: BlocProvider.of<TodoFilterBloc>(context),
-            todoSearchBloc: BlocProvider.of<TodoSearchBloc>(context),
-            todoListBloc: BlocProvider.of<TodoListBloc>(context),
           ),
         ),
       ],

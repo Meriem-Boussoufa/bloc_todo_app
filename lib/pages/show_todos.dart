@@ -7,42 +7,77 @@ import '../models/todo_model.dart';
 class ShowTodos extends StatelessWidget {
   const ShowTodos({super.key});
 
+  List<Todo> setFilteredTodos(
+    Filter filter,
+    List<Todo> todos,
+    String searchTerm,
+  ) {
+    List<Todo> filteredTodos;
+    switch (filter) {
+      case Filter.active:
+        filteredTodos = todos.where((Todo todo) => !todo.completed).toList();
+        break;
+      case Filter.completed:
+        filteredTodos = todos.where((Todo todo) => todo.completed).toList();
+        break;
+      case Filter.all:
+      default:
+        filteredTodos = todos;
+        break;
+    }
+
+    if (searchTerm.isNotEmpty) {
+      filteredTodos = filteredTodos
+          .where((Todo todo) => todo.desc.toLowerCase().contains(searchTerm))
+          .toList();
+    }
+    return filteredTodos;
+  }
+
   @override
   Widget build(BuildContext context) {
     final todos = context.watch<FilteredTodosBloc>().state.filteredTodos;
     // ? using Bloc Listener
-    return /*MultiBlocListener(
-      listeners: [
-        BlocListener<TodoListCubit, TodoListState>(
-          listener: (context, state) {
-            context.read<FilteredTodosCubit>().setFilteredTodos(
-                  context.read<TodoFilterCubit>().state.filter,
-                  state.todos,
-                  context.read<TodoSearchCubit>().state.searchTerm,
-                );
-          },
-        ),
-        BlocListener<TodoFilterCubit, TodoFilterState>(
-          listener: (context, state) {
-            context.read<FilteredTodosCubit>().setFilteredTodos(
-                  state.filter,
-                  context.read<TodoListCubit>().state.todos,
-                  context.read<TodoSearchCubit>().state.searchTerm,
-                );
-          },
-        ),
-        BlocListener<TodoSearchCubit, TodoSearchState>(
-          listener: (context, state) {
-            context.read<FilteredTodosCubit>().setFilteredTodos(
-                  context.read<TodoFilterCubit>().state.filter,
-                  context.read<TodoListCubit>().state.todos,
-                  state.searchTerm,
-                );
-          },
-        ),
-      ],
-      child: */
-        ListView.separated(
+    return MultiBlocListener(
+        listeners: [
+          BlocListener<TodoListBloc, TodoListState>(
+            listener: (context, state) {
+              final filteredTodos = setFilteredTodos(
+                context.read<TodoFilterBloc>().state.filter,
+                state.todos,
+                context.read<TodoSearchBloc>().state.searchTerm,
+              );
+              context.read<FilteredTodosBloc>().add(
+                    CalculateFilteredTodosEvent(filteredTodos: filteredTodos),
+                  );
+            },
+          ),
+          BlocListener<TodoFilterBloc, TodoFilterState>(
+            listener: (context, state) {
+              final filteredTodos = setFilteredTodos(
+                state.filter,
+                context.read<TodoListBloc>().state.todos,
+                context.read<TodoSearchBloc>().state.searchTerm,
+              );
+              context.read<FilteredTodosBloc>().add(
+                    CalculateFilteredTodosEvent(filteredTodos: filteredTodos),
+                  );
+            },
+          ),
+          BlocListener<TodoSearchBloc, TodoSearchState>(
+            listener: (context, state) {
+              final filteredTodos = setFilteredTodos(
+                context.read<TodoFilterBloc>().state.filter,
+                context.read<TodoListBloc>().state.todos,
+                state.searchTerm,
+              );
+              context.read<FilteredTodosBloc>().add(
+                    CalculateFilteredTodosEvent(filteredTodos: filteredTodos),
+                  );
+            },
+          ),
+        ],
+        child: ListView.separated(
             primary: false,
             shrinkWrap: true,
             separatorBuilder: (BuildContext context, int index) {
@@ -82,9 +117,7 @@ class ShowTodos extends StatelessWidget {
                 child: TodoItem(todo: todos[index]),
               );
             },
-            itemCount: todos.length
-            //)
-            );
+            itemCount: todos.length));
   }
 
   Widget showBackground(int direction) {
